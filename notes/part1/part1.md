@@ -168,7 +168,7 @@ sum of array is 32114780
 ==58451== ERROR SUMMARY: 19 errors from 5 contexts (suppressed: 0 from 0)
 ```
 
-When checking for the propagation of "uninitialized values," Valgrind typically only reports the **first point where the dirty data causes a problem**—such as in a conditional check, output operation, or calculation—**if the** **`--track-origins=yes`** **--track-origins=yes** **--track-origins=yes** **--track-origins=yes flag is not used**.
+When checking for the propagation of "uninitialized values," Valgrind typically only reports the **first point where the dirty data causes a problem**—such as in a conditional check, output operation, or calculation—**if the** **`--track-origins=yes`** **--track-origins=yes** **--track-origins=yes** **--track-origins=yes** **--track-origins=yes flag is not used**.
 
 
 
@@ -222,6 +222,231 @@ void swap(int *px, int *py) {
 **Difference between an array name and a pointer**:
 
 Pointer is a variable `pa = a` and `pa++` are legal. But an array name is not a variable `a=pa` and `a++`  are illegal.
+
+
+
+There is an important difference between these definition
+
+```c
+char amessage[] = "now is the time";   /* 一个数组 */
+char *pmessage = "now is the time";    /* 一个指针 */
+```
+
+`amessage` is an array, just big enough to hold the sequence of chars and `'\0'. amessage` will always point to the same storage.
+
+`pmessage` is a pointer, may subsequently be modified to point elsewhere.
+
+![](4.png)
+
+
+
+**Multi-dimensional Arrays**
+
+```c
+static char daytab[2][13] = {
+    {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+    {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+};
+```
+
+```c
+char *name[] = { "Illegal month", "Jan", "Feb", "Mar" };
+```
+
+```c
+char aname[][15] = { "Illegal month", "Jan", "Feb", "Mar" };
+```
+
+
+
+# Structure
+
+```c
+struct point {
+  int x;
+  int y;
+};
+
+struct point pt;
+struct point pt1 = {300, 400};
+struct {
+  int len; 
+  char* str;
+} *p;
+++p->len
+
+struct key {
+    char *word;
+    int count;
+} keytab[] = {
+    "auto", 0,
+    "break", 0,
+    // ...
+    "while", 0
+};
+
+struct key {
+    char *word;
+    int count;
+} keytab[] = {
+    {"auto", 0},
+    {"break", 0},
+    // ...
+    {"while", 0},
+};
+```
+
+
+
+The structure operator `.` and `->` together with `()`  for function calls and `[]` for subscripts are at the top of the precedence hierarchy and bind very tightly.
+
+```c
+struct {
+  int len; 
+  char* str;
+} *p;
+++p->len
+```
+
+`++p->len` increments `len` not `p`, the implied parenthesization is `++(p->len)`
+
+
+
+```c
+typedef struct { // typedef struct最后面跟的才是别名，而普通struct后面跟的是变量的声明
+    int a;
+    int b;
+} MyStruct;  // 这里MyStruct才是“别名”
+
+MyStruct arr[10];
+```
+
+
+
+The recursive declaration of a node is correct, but it is necessary to use pointer.
+
+```c
+struct tnode { /* the tree node: */
+    char *word;      /* points to the text */
+    int count;       /* number of occurrences */
+    struct tnode *left;  /* left child */
+    struct tnode *right; /* right child */
+};
+```
+
+
+
+**Union**
+
+A single variable that can hold any of one of several types.
+
+```c
+
+```
+
+The variable `u` will be large enough to hold the largest of the three types.
+
+Use `u_type` to keep track of the current type stored in `u`
+
+```c
+if (utype == INT)
+    printf("%d\n", u.ival);
+else if (utype == FLOAT)
+    printf("%f\n", u.fval);
+else if (utype == STRING)
+    printf("%s\n", u.sval);
+else
+    printf("bad type %d in utype\n", utype);
+```
+
+Use Union in Struct
+
+```c
+struct {
+    char *name;  // 符号名称
+    int flags;   // 标志位（属性）
+    int utype;   // 用于指示 union 里当前存放的数据类型（比如 INT, FLOAT, STRING）
+    union {
+        int ival;
+        float fval;
+        char *sval;
+    } u;         // 联合体变量名为 u
+} symtab[NSYM];  // 声明结构体数组 symtab，长度为 NSYM
+```
+
+A union may only be initialized with a value of the type of its first member.
+
+```c
+union u_tag {
+    int ival;
+    float fval;
+    char *sval;
+};
+
+union u_tag u = { 10 };          // 10 是 int，初始化 ival. 只能这么初始化
+union u_tag u;
+u.fval = 3.14f;  //初始化其他成员，必须先声明再赋值
+```
+
+
+
+**Bit-field**
+
+```c
+struct flags {
+    unsigned int is_keyword : 1; // 占1位
+    unsigned int is_extern  : 1; // 占1位
+    unsigned int is_static  : 1; // 占1位
+};
+```
+
+We can specific the number of bits ocuppied by a member.
+
+Status of a switch
+
+```c
+struct {
+    unsigned int power_on  : 1; // 开关机标志
+    unsigned int error     : 1; // 错误标志
+    unsigned int connected : 1; // 连接标志
+} status;
+
+status.power_on = 1; // 开
+status.error = 0;    // 清除错误
+```
+
+
+
+# Command-line
+
+**Command-line Arguments**
+
+```c
+int main(int argc, char *argv[])
+```
+
+```bash
+echo hello, world
+```
+
+- `argv[0]` = `"echo"` (程序名)
+- `argv[1]` = `"hello,"`
+- `argv[2]` = `"world"`
+- `argc` = 3
+
+Print all of the paramters.
+
+```c
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+    for (int i = 1; i < argc; i++) {
+        printf("%s ", argv[i]);
+    }
+    printf("\n");
+    return 0;
+}
+```
 
 # Common Faults
 
