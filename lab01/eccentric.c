@@ -1,9 +1,9 @@
 #include <stdio.h>
 
 /* Only change any of these 4 values */
-#define V0 3
-#define V1 3
-#define V2 1
+#define V0 5
+#define V1 4
+#define V2 9
 #define V3 3
 
 int main(void) {
